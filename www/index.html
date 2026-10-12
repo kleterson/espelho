@@ -37,7 +37,7 @@
             </div>
 
             <div class="relative w-full h-72 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 flex items-center justify-center mb-4">
-                <video id="video" autoplay playsinline class="w-full h-full object-cover transform -scale-x-100"></video>
+                <video id="video" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
                 <canvas id="canvas" class="hidden"></canvas>
                 
                 <div id="face-guide" class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none hidden">
@@ -54,7 +54,7 @@
 
                 <div id="camera-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-950">
                     <i class="fa-solid fa-face-smile text-3xl mb-2 text-indigo-400"></i>
-                    <span class="text-xs text-slate-400">Clique abaixo para ativar o reconhecimento</span>
+                    <span class="text-xs text-slate-400">Clique abaixo para ativar a câmara</span>
                 </div>
             </div>
 
@@ -122,7 +122,10 @@
     </div>
 
     <script>
-        const usuario = JSON.parse(sessionStorage.getItem('usuario_logado'));
+        const API_URL = 'https://espelho-p5wk.onrender.com';
+
+        // Leitura correta do localStorage para mobile
+        const usuario = JSON.parse(localStorage.getItem('usuario_logado'));
         if (!usuario) { window.location.href = 'login.html'; }
         document.getElementById('nome-usuario-header').innerText = usuario.nome;
 
@@ -138,22 +141,36 @@
         document.getElementById('seletor-mes').value = `${agoraGlobal.getFullYear()}-${String(agoraGlobal.getMonth() + 1).padStart(2, '0')}`;
         setInterval(() => { document.getElementById('relogio').innerText = new Date().toLocaleTimeString('pt-PT'); }, 1000);
 
-        async function baterPontoAutomatico() {
+        async function ligarCamera() {
             try {
                 if (!streamAtivo) {
                     instrucaoBiometria.innerText = "A ligar a câmara...";
-                    streamAtivo = await navigator.mediaDevices.getUserMedia({ video: { width: 400, height: 400 } });
+                    streamAtivo = await navigator.mediaDevices.getUserMedia({ 
+                        video: { width: { ideal: 640 }, height: { ideal: 640 }, facingMode: "user" } 
+                    });
                     video.srcObject = streamAtivo;
                     cameraPlaceholder.classList.add('hidden');
                     faceGuide.classList.remove('hidden');
                     instrucaoBiometria.innerText = "Centralize o rosto...";
-                    
+                }
+            } catch (err) {
+                console.error("Erro câmara:", err);
+                alert('Não foi possível aceder à câmara. Verifique as permissões do telemóvel.');
+                instrucaoBiometria.innerText = "Erro na câmara";
+            }
+        }
+
+        async function baterPontoAutomatico() {
+            try {
+                if (!streamAtivo) {
+                    await ligarCamera();
+                    if (!streamAtivo) return;
                     setTimeout(() => { executarRegistoPonto(); }, 1800);
                 } else {
                     executarRegistoPonto();
                 }
             } catch (err) {
-                alert('Erro ao aceder à câmara.');
+                alert('Erro ao processar o ponto automático.');
             }
         }
 
@@ -170,9 +187,14 @@
             const dataKey = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
             const horaAtual = agora.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' });
 
-            const res = await fetch(`/api/pontos/${usuario.id}`);
+            const res = await fetch(`${API_URL}/api/pontos/${usuario.id}`);
             const todosPontos = await res.json();
             let reg = todosPontos[dataKey] || { usuario_id: usuario.id, data: dataKey, entrada: '-', pausa: '-', retorno: '-', saida: '-', foto: null };
+
+            if (reg.entrada === 'FOLGA' || reg.entrada === 'ATESTADO') {
+                alert('Este dia está marcado como ' + reg.entrada + '.');
+                return;
+            }
 
             let tipoMsg = '';
             if (reg.entrada === '-') { reg.entrada = horaAtual; tipoMsg = `Entrada às ${horaAtual}`; }
@@ -183,7 +205,7 @@
             reg.foto = fotoBase64;
             reg.usuario_id = usuario.id;
 
-            await fetch('/api/pontos', {
+            await fetch(`${API_URL}/api/pontos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(reg)
@@ -204,41 +226,54 @@
         }
 
         async function carregarCalendario() {
-            const valorMes = document.getElementById('seletor-mes').value;
-            const [ano, mesStr] = valorMes.split('-');
-            const mesIndex = parseInt(mesStr) - 1;
-            const totalDias = new Date(ano, mesIndex + 1, 0).getDate();
+            try {
+                const valorMes = document.getElementById('seletor-mes').value;
+                const [ano, mesStr] = valorMes.split('-');
+                const mesIndex = parseInt(mesStr) - 1;
+                const totalDias = new Date(ano, mesIndex + 1, 0).getDate();
 
-            const res = await fetch(`/api/pontos/${usuario.id}`);
-            const registros = await res.json();
+                const res = await fetch(`${API_URL}/api/pontos/${usuario.id}`);
+                const registros = await res.json();
 
-            let html = '';
-            for (let dia = 1; dia <= totalDias; dia++) {
-                const dataKey = `${ano}-${mesStr}-${String(dia).padStart(2, '0')}`;
-                const reg = registros[dataKey] || { entrada: '-', pausa: '-', retorno: '-', saida: '-', foto: null };
-                const dataObj = new Date(ano, mesIndex, dia);
-                const diaSemana = dataObj.toLocaleDateString('pt-PT', { weekday: 'short' }).replace('.', '');
+                let html = '';
+                for (let dia = 1; dia <= totalDias; dia++) {
+                    const dataKey = `${ano}-${mesStr}-${String(dia).padStart(2, '0')}`;
+                    const reg = registros[dataKey] || { entrada: '-', pausa: '-', retorno: '-', saida: '-', foto: null };
+                    const dataObj = new Date(ano, mesIndex, dia);
+                    const diaSemana = dataObj.toLocaleDateString('pt-PT', { weekday: 'short' }).replace('.', '');
 
-                html += `
-                    <tr class="hover:bg-slate-800/40">
-                        <td class="py-2 px-2 font-medium">${String(dia).padStart(2, '0')} <span class="text-[9px] text-slate-500 uppercase">(${diaSemana})</span></td>
-                        <td class="py-2 px-2 text-emerald-400 font-mono">${reg.entrada}</td>
-                        <td class="py-2 px-2 text-amber-400 font-mono">${reg.pausa}</td>
-                        <td class="py-2 px-2 text-cyan-400 font-mono">${reg.retorno}</td>
-                        <td class="py-2 px-2 text-rose-400 font-mono">${reg.saida}</td>
-                        <td class="py-2 px-2 text-center">
-                            ${reg.foto ? `<button onclick="verFoto('${reg.foto}')" class="text-indigo-400 text-xs"><i class="fa-solid fa-eye"></i></button>` : '-'}
-                        </td>
-                    </tr>
-                `;
+                    let ent = reg.entrada;
+                    let pau = reg.pausa;
+                    let ret = reg.retorno;
+                    let sai = reg.saida;
+
+                    let corStatus = "text-emerald-400";
+                    if (ent === 'FOLGA') corStatus = "text-purple-400 font-bold";
+                    if (ent === 'ATESTADO') corStatus = "text-blue-400 font-bold";
+
+                    html += `
+                        <tr class="hover:bg-slate-800/40">
+                            <td class="py-2.5 px-2 font-medium">${String(dia).padStart(2, '0')} <span class="text-[9px] text-slate-500 uppercase">(${diaSemana})</span></td>
+                            <td class="py-2.5 px-2 ${corStatus} font-mono">${ent}</td>
+                            <td class="py-2.5 px-2 text-amber-400 font-mono">${pau}</td>
+                            <td class="py-2.5 px-2 text-cyan-400 font-mono">${ret}</td>
+                            <td class="py-2.5 px-2 text-rose-400 font-mono">${sai}</td>
+                            <td class="py-2.5 px-2 text-center">
+                                ${reg.foto && reg.foto.startsWith('data:image') ? `<button onclick="verFoto('${reg.foto}')" class="text-indigo-400 text-xs"><i class="fa-solid fa-eye"></i></button>` : '-'}
+                            </td>
+                        </tr>
+                    `;
+                }
+                document.getElementById('tabela-ponto').innerHTML = html;
+            } catch (err) {
+                console.error("Erro ao carregar calendário:", err);
             }
-            document.getElementById('tabela-ponto').innerHTML = html;
         }
 
         async function limparHistoricoMes() {
             const valorMes = document.getElementById('seletor-mes').value;
             if (confirm(`Deseja limpar os registos de ${valorMes}?`)) {
-                await fetch(`/api/pontos/${usuario.id}/${valorMes}`, { method: 'DELETE' });
+                await fetch(`${API_URL}/api/pontos/${usuario.id}/${valorMes}`, { method: 'DELETE' });
                 carregarCalendario();
             }
         }
@@ -254,7 +289,7 @@
 
             if (!data || !horario || !motivo) { alert('Preencha todos os campos.'); return; }
 
-            await fetch('/api/solicitacoes', {
+            await fetch(`${API_URL}/api/solicitacoes`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ usuario_id: usuario.id, funcionario: usuario.nome, data, tipo, horario, motivo })
@@ -266,9 +301,12 @@
 
         function verFoto(url) { document.getElementById('img-modal').src = url; document.getElementById('modal-foto').classList.remove('hidden'); document.getElementById('modal-foto').classList.add('flex'); }
         function fecharModalFoto() { document.getElementById('modal-foto').classList.add('hidden'); document.getElementById('modal-foto').classList.remove('flex'); }
-        function sair() { sessionStorage.clear(); window.location.href = 'login.html'; }
+        
+        // Limpeza correta da sessão com localStorage
+        function sair() { localStorage.clear(); window.location.href = 'login.html'; }
 
         carregarCalendario();
+        ligarCamera();
     </script>
 </body>
 </html>
