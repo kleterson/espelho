@@ -6,10 +6,24 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuração do Supabase
-const SUPABASE_URL = process.env.SUPABASE_URL || 'postgresql://postgres:%40@G1hh4ej22d@db.vvmvgdfjwcdzivojgtpg.supabase.co:6543/postgres';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_b8P_8mp7tCHz8AmkorjP6A_UAugVU21';
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ⚙️ Conexão com o Supabase (PostgreSQL via Pooler)
+const connectionString = process.env.DATABASE_URL;
+const sql = postgres(connectionString, { 
+    ssl: 'require',
+    family: 4
+});
+
+// Testar conexão ao iniciar
+async function testarConexao() {
+    try {
+        const result = await sql`SELECT NOW()`;
+        console.log('Conectado ao Supabase (PostgreSQL) com sucesso!', result[0].now);
+    } catch (err) {
+        console.error('Erro ao conectar ao Supabase:', err.message);
+    }
+}
+testarConexao();
 
 app.use(cors());
 app.use(express.json({ limit: '15mb' }));
