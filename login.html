@@ -36,27 +36,36 @@
     </div>
 
     <script>
+        const API_URL = 'https://espelho-p5wk.onrender.com';
+
         async function realizarLogin(e) {
             e.preventDefault();
             const nome = document.getElementById('login-nome').value.trim();
             const senha = document.getElementById('login-senha').value.trim();
 
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nome, senha })
-            });
+            try {
+                const res = await fetch(`${API_URL}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, senha })
+                });
 
-            const user = await res.json();
-            if (res.ok) {
-                sessionStorage.setItem('usuario_logado', JSON.stringify(user));
-                if (user.cargo === 'admin') {
-                    window.location.href = 'admin.html';
+                const user = await res.json();
+                if (res.ok) {
+                    // Utilizar localStorage para persistir corretamente na WebView do telemóvel
+                    localStorage.setItem('usuario_logado', JSON.stringify(user));
+                    
+                    if (user.cargo === 'admin') {
+                        window.location.href = 'admin.html';
+                    } else {
+                        window.location.href = 'index.html';
+                    }
                 } else {
-                    window.location.href = 'index.html';
+                    alert(user.error || 'Erro ao realizar login.');
                 }
-            } else {
-                alert(user.error || 'Erro ao realizar login.');
+            } catch (err) {
+                console.error("Erro de rede:", err);
+                alert('Não foi possível ligar ao servidor. Verifique a ligação à internet.');
             }
         }
     </script>
