@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChronosID - Painel do Administrador</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>tailwind.config = { theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] } } } }</script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col">
+
+    <header class="border-b border-slate-800/80 bg-slate-900/50 backdrop-blur-xl sticky top-0 z-40 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                <i class="fa-solid fa-user-shield text-white text-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-white">Painel do Administrador</h1>
+                <p class="text-xs text-slate-400">Gestão Global Supabase</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="carregarTudo()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center space-x-2 shadow"><i class="fa-solid fa-rotate"></i><span>Atualizar</span></button>
+            <button onclick="sair()" class="bg-slate-800 hover:bg-slate-700 text-rose-400 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-700"><i class="fa-solid fa-right-from-bracket"></i></button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8 flex-grow w-full space-y-8">
+        
+        <!-- Cadastrar Novo Funcionário -->
+        <section class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-3xl shadow-2xl">
+            <h2 class="text-base font-bold text-white mb-4 flex items-center"><i class="fa-solid fa-user-plus text-emerald-400 mr-2"></i>Cadastrar Novo Funcionário</h2>
+            <form id="formCadastrarFuncionario" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1 font-medium">Nome do Funcionário</label>
+                    <input type="text" id="nomeFuncionario" placeholder="Ex: João Silva" required class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-medium">Senha (Apenas Números)</label>
+                    <input type="password" id="senhaFuncionario" placeholder="Ex: 123456" inputmode="numeric" pattern="[0-9]*" required class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200">
+                </div>
+                <div>
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-4 rounded-xl transition shadow">Criar Funcionário</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Lançar Folga -->
+        <section class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-3xl shadow-2xl">
+            <h2 class="text-base font-bold text-white mb-4 flex items-center"><i class="fa-solid fa-umbrella-beach text-purple-400 mr-2"></i>Lançar Folga / Atestado para Funcionário</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1 font-medium">Funcionário</label>
+                    <select id="select-usuario" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200"></select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-medium">Data</label>
+                    <input type="date" id="folga-data" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-medium">Tipo</label>
+                    <select id="folga-tipo" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200">
+                        <option value="FOLGA">FOLGA</option>
+                        <option value="ATESTADO">ATESTADO MÉDICO</option>
+                        <option value="FALTA">FALTA JUSTIFICADA</option>
+                    </select>
+                </div>
+                <div>
+                    <button onclick="lancarFolga()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2.5 px-4 rounded-xl transition shadow">Aplicar</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Solicitações -->
+        <section class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-3xl shadow-2xl">
+            <h2 class="text-base font-bold text-white mb-4 flex items-center"><i class="fa-solid fa-bell text-amber-400 mr-2"></i>Solicitações de Edição Pendentes</h2>
+            <div id="lista-solicitacoes" class="space-y-3"></div>
+        </section>
+
+        <!-- Registos Globais -->
+        <section class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-3xl shadow-2xl">
+            <h2 class="text-base font-bold text-white mb-4 flex items-center"><i class="fa-solid fa-database text-indigo-400 mr-2"></i>Base de Dados de Todos os Funcionários</h2>
+            <div class="overflow-x-auto rounded-2xl border border-slate-800/60 bg-slate-950/40">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-800 text-[11px] font-semibold text-slate-400 uppercase bg-slate-900/45">
+                            <th class="py-3.5 px-4">Funcionário</th>
+                            <th class="py-3.5 px-4">Data</th>
+                            <th class="py-3.5 px-4">Entrada</th>
+                            <th class="py-3.5 px-4">Pausa</th>
+                            <th class="py-3.5 px-4">Retorno</th>
+                            <th class="py-3.5 px-4">Saída</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-admin-geral" class="text-sm divide-y divide-slate-800/50"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        async function carregarUsuarios() {
+            const res = await fetch('/api/usuarios');
+            const usuarios = await res.json();
+            const select = document.getElementById('select-usuario');
+            select.innerHTML = usuarios.filter(u => u.cargo !== 'admin').map(u => `<option value="${u.id}">${u.nome}</option>`).join('');
+        }
+
+        // Evento para cadastrar funcionário com validação restrita a números na senha
+        document.getElementById('formCadastrarFuncionario').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const nome = document.getElementById('nomeFuncionario').value;
+            const senha = document.getElementById('senhaFuncionario').value;
+
+            if (!/^\d+$/.test(senha)) {
+                alert('A senha deve conter apenas números!');
+                return;
+            }
+
+            try {
+                const resposta = await fetch('/api/admin/criar-funcionario', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, senha })
+                });
+
+                const resultado = await resposta.json();
+
+                if (resposta.ok) {
+                    alert('Funcionário criado com sucesso!');
+                    document.getElementById('formCadastrarFuncionario').reset();
+                    carregarTudo();
+                } else {
+                    alert('Erro: ' + (resultado.error || 'Não foi possível criar o funcionário.'));
+                }
+            } catch (erro) {
+                console.error('Erro ao cadastrar:', erro);
+                alert('Erro de conexão com o servidor.');
+            }
+        });
+
+        async function lancarFolga() {
+            const usuario_id = document.getElementById('select-usuario').value;
+            const data = document.getElementById('folga-data').value;
+            const status = document.getElementById('folga-tipo').value;
+
+            if (!usuario_id || !data) { alert('Selecione o funcionário e a data.'); return; }
+
+            await fetch('/api/admin/lancar-status', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuario_id, data, status })
+            });
+            alert('Atribuído com sucesso!');
+            carregarTudo();
+        }
+
+        async function carregarSolicitacoes() {
+            const res = await fetch('/api/solicitacoes');
+            const pendentes = await res.json();
+            const container = document.getElementById('lista-solicitacoes');
+
+            if (pendentes.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-500 italic bg-slate-950/30 p-4 rounded-xl border border-slate-800">Sem solicitações pendentes.</p>`;
+                return;
+            }
+
+            let html = '';
+            pendentes.forEach(s => {
+                html += `
+                    <div class="bg-slate-950/65 border border-slate-800 p-4 rounded-2xl flex justify-between items-center text-xs">
+                        <div>
+                            <div class="font-semibold text-indigo-400 mb-1">${s.funcionario} • Data: ${s.data}</div>
+                            <p class="text-slate-300">Alterar <b>${s.tipo}</b> para <b>${s.horario}</b> (Motivo: "${s.motivo}")</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="responderPedido('${s.id}', 'aceito', '${s.usuario_id}', '${s.data}', '${s.tipo}', '${s.horario}')" class="bg-emerald-600 text-white px-3 py-1.5 rounded-xl font-medium">Aceitar</button>
+                            <button onclick="responderPedido('${s.id}', 'recusado', '${s.usuario_id}', '${s.data}', '${s.tipo}', '${s.horario}')" class="bg-rose-600 text-white px-3 py-1.5 rounded-xl font-medium">Recusar</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        async function responderPedido(id, acao, usuario_id, data, tipo, horario) {
+            await fetch('/api/solicitacoes/responder', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, acao, usuario_id, data, tipo, horario })
+            });
+            carregarTudo();
+        }
+
+        async function carregarRegistrosGlobais() {
+            const res = await fetch('/api/admin/todos-pontos');
+            const registros = await res.json();
+            const tbody = document.getElementById('tabela-admin-geral');
+
+            if (registros.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-xs text-slate-500">Sem registos.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            registros.forEach(r => {
+                const nomeFunc = r.usuarios ? r.usuarios.nome : 'Funcionário';
+                html += `
+                    <tr class="hover:bg-slate-800/40 text-xs">
+                        <td class="py-3 px-4 font-semibold text-slate-200">${nomeFunc}</td>
+                        <td class="py-3 px-4 font-mono text-indigo-300">${r.data}</td>
+                        <td class="py-3 px-4 text-emerald-400 font-mono">${r.entrada}</td>
+                        <td class="py-3 px-4 text-amber-400 font-mono">${r.pausa}</td>
+                        <td class="py-3 px-4 text-cyan-400 font-mono">${r.retorno}</td>
+                        <td class="py-3 px-4 text-rose-400 font-mono">${r.saida}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function carregarTudo() {
+            carregarUsuarios();
+            carregarSolicitacoes();
+            carregarRegistrosGlobais();
+        }
+
+        function sair() { sessionStorage.clear(); window.location.href = 'login.html'; }
+
+        carregarTudo();
+        setInterval(carregarTudo, 5000);
+    </script>
+</body>
+</html>
