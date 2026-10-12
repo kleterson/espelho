@@ -7,7 +7,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Configuração do Supabase
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vvmvgdfjwcdzivojgtpg.supabase.co';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'postgresql://postgres:%40@G1hh4ej22d@db.vvmvgdfjwcdzivojgtpg.supabase.co:6543/postgres';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_b8P_8mp7tCHz8AmkorjP6A_UAugVU21';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
