@@ -16,6 +16,7 @@ app.use(express.json({ limit: '15mb' }));
 
 // Em vez de procurar apenas na raiz (__dirname), mandamos procurar dentro da pasta 'www'
 app.use(express.static(path.join(__dirname, 'www')));
+
 app.get('/login.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
@@ -60,6 +61,30 @@ app.get('/api/usuarios', async (req, res) => {
     const { data, error } = await supabase.from('usuarios').select('*');
     if (error) return res.status(500).json({ error: error.message });
     res.json(data);
+});
+
+// --- CRIAR FUNCIONÁRIO (ADMIN) ---
+app.post('/api/admin/criar-funcionario', async (req, res) => {
+    try {
+        const { nome, senha } = req.body;
+
+        // Validação no backend para garantir que a senha tem apenas números
+        if (!/^\d+$/.test(senha)) {
+            return res.status(400).json({ error: 'A senha deve conter apenas números.' });
+        }
+
+        const { data, error } = await supabase
+            .from('usuarios')
+            .insert([{ nome, senha, cargo: 'funcionario' }])
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        res.json({ success: true, user: data });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // --- PONTOS ---

@@ -29,6 +29,24 @@
 
     <main class="max-w-7xl mx-auto px-6 py-8 flex-grow w-full space-y-8">
         
+        <!-- Cadastrar Novo Funcionário -->
+        <section class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-3xl shadow-2xl">
+            <h2 class="text-base font-bold text-white mb-4 flex items-center"><i class="fa-solid fa-user-plus text-emerald-400 mr-2"></i>Cadastrar Novo Funcionário</h2>
+            <form id="formCadastrarFuncionario" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1 font-medium">Nome do Funcionário</label>
+                    <input type="text" id="nomeFuncionario" placeholder="Ex: João Silva" required class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200">
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-medium">Senha (Apenas Números)</label>
+                    <input type="password" id="senhaFuncionario" placeholder="Ex: 123456" inputmode="numeric" pattern="[0-9]*" required class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-slate-200">
+                </div>
+                <div>
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 px-4 rounded-xl transition shadow">Criar Funcionário</button>
+                </div>
+            </form>
+        </section>
+
         <!-- Lançar Folga -->
         <section class="bg-slate-900/60 border border-slate-800/80 p-6 rounded-3xl shadow-2xl">
             <h2 class="text-base font-bold text-white mb-4 flex items-center"><i class="fa-solid fa-umbrella-beach text-purple-400 mr-2"></i>Lançar Folga / Atestado para Funcionário</h2>
@@ -50,7 +68,7 @@
                     </select>
                 </div>
                 <div>
-                    <button onclick="lancarFolga()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2.5 px-4 rounded-xl transition">Aplicar</button>
+                    <button onclick="lancarFolga()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2.5 px-4 rounded-xl transition shadow">Aplicar</button>
                 </div>
             </div>
         </section>
@@ -89,6 +107,40 @@
             const select = document.getElementById('select-usuario');
             select.innerHTML = usuarios.filter(u => u.cargo !== 'admin').map(u => `<option value="${u.id}">${u.nome}</option>`).join('');
         }
+
+        // Evento para cadastrar funcionário com validação restrita a números na senha
+        document.getElementById('formCadastrarFuncionario').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const nome = document.getElementById('nomeFuncionario').value;
+            const senha = document.getElementById('senhaFuncionario').value;
+
+            if (!/^\d+$/.test(senha)) {
+                alert('A senha deve conter apenas números!');
+                return;
+            }
+
+            try {
+                const resposta = await fetch('/api/admin/criar-funcionario', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, senha })
+                });
+
+                const resultado = await resposta.json();
+
+                if (resposta.ok) {
+                    alert('Funcionário criado com sucesso!');
+                    document.getElementById('formCadastrarFuncionario').reset();
+                    carregarTudo();
+                } else {
+                    alert('Erro: ' + (resultado.error || 'Não foi possível criar o funcionário.'));
+                }
+            } catch (erro) {
+                console.error('Erro ao cadastrar:', erro);
+                alert('Erro de conexão com o servidor.');
+            }
+        });
 
         async function lancarFolga() {
             const usuario_id = document.getElementById('select-usuario').value;
