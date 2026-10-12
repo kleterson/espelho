@@ -18,13 +18,16 @@ app.use(express.json({ limit: '15mb' }));
 app.use(express.static(path.join(__dirname, 'www')));
 
 app.get('/login.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
+    res.sendFile(path.join(__dirname, 'www', 'login.html'));
 });
 
 app.get('/admin.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
+    res.sendFile(path.join(__dirname, 'www', 'admin.html'));
 });
 
+app.get('/index.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'www', 'index.html'));
+});
 // --- AUTENTICAÇÃO / LOGIN ---
 app.post('/api/login', async (req, res) => {
     const { nome, senha } = req.body;
