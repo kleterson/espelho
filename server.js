@@ -16,6 +16,13 @@ app.use(express.json({ limit: '15mb' }));
 
 // Em vez de procurar apenas na raiz (__dirname), mandamos procurar dentro da pasta 'www'
 app.use(express.static(path.join(__dirname, 'www')));
+app.get('/login.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+app.get('/admin.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
 
 // --- AUTENTICAÇÃO / LOGIN ---
 app.post('/api/login', async (req, res) => {
