@@ -6,15 +6,15 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuração temporária para testes
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://exemplo.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'chave_falsa_teste';
+// Configuração do Supabase
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vvmvgdfjwcdzivojgtpg.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_b8P_8mp7tCHz8AmkorjP6A_UAugVU21';
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 app.use(cors());
 app.use(express.json({ limit: '15mb' }));
 
-// Em vez de procurar apenas na raiz (__dirname), mandamos procurar dentro da pasta 'www'
+// Servir ficheiros estáticos da pasta 'www'
 app.use(express.static(path.join(__dirname, 'www')));
 
 app.get('/login.html', (req, res) => {
@@ -29,7 +29,6 @@ app.get('/admin.html', (req, res) => {
 app.post('/api/login', async (req, res) => {
     const { nome, senha } = req.body;
     
-    // Verificar se o utilizador já existe
     let { data: user, error } = await supabase
         .from('usuarios')
         .select('*')
@@ -37,7 +36,6 @@ app.post('/api/login', async (req, res) => {
         .single();
 
     if (!user) {
-        // Se não existir, cria automaticamente como funcionário (ou admin se for o primeiro)
         const cargo = nome.toLowerCase() === 'admin' ? 'admin' : 'funcionario';
         const { data: newUser, err } = await supabase
             .from('usuarios')
@@ -68,7 +66,6 @@ app.post('/api/admin/criar-funcionario', async (req, res) => {
     try {
         const { nome, senha } = req.body;
 
-        // Validação no backend para garantir que a senha tem apenas números
         if (!/^\d+$/.test(senha)) {
             return res.status(400).json({ error: 'A senha deve conter apenas números.' });
         }
@@ -104,7 +101,6 @@ app.get('/api/pontos/:usuario_id', async (req, res) => {
 app.post('/api/pontos', async (req, res) => {
     const { usuario_id, data, entrada, pausa, retorno, saida, foto } = req.body;
     
-    // Upsert baseado em usuario_id e data
     const { error } = await supabase
         .from('pontos')
         .upsert({ usuario_id, data, entrada, pausa, retorno, saida, foto }, { onConflict: 'usuario_id,data' });
@@ -113,7 +109,6 @@ app.post('/api/pontos', async (req, res) => {
     res.json({ status: 'ok' });
 });
 
-// Admin lançar folga/atestado
 app.post('/api/admin/lancar-status', async (req, res) => {
     const { usuario_id, data, status } = req.body;
     const { error } = await supabase
@@ -133,8 +128,7 @@ app.post('/api/admin/lancar-status', async (req, res) => {
 });
 
 app.delete('/api/pontos/:usuario_id/:mes', async (req, res) => {
-    const { usuario_id, mes } = req.params; // AAAA-MM
-    // Apaga os pontos do mês para o utilizador específico
+    const { usuario_id, mes } = req.params;
     const { data, error } = await supabase
         .from('pontos')
         .delete()
@@ -177,7 +171,6 @@ app.post('/api/solicitacoes/responder', async (req, res) => {
     if (error) return res.status(500).json({ error: error.message });
 
     if (acao === 'aceito') {
-        // Buscar ponto atual ou criar novo
         let { data: p } = await supabase.from('pontos').select('*').eq('usuario_id', usuario_id).eq('data', data).single();
         if (!p) {
             p = { usuario_id, data, entrada: '-', pausa: '-', retorno: '-', saida: '-', foto: null };
@@ -190,7 +183,6 @@ app.post('/api/solicitacoes/responder', async (req, res) => {
     res.json({ status: 'ok' });
 });
 
-// Endpoint global para o admin ver todos os registos
 app.get('/api/admin/todos-pontos', async (req, res) => {
     const { data, error } = await supabase.from('pontos').select('*, usuarios(nome)');
     if (error) return res.status(500).json({ error: error.message });
