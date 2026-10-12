@@ -101,14 +101,19 @@
     </main>
 
     <script>
+        const API_URL = 'https://espelho-p5wk.onrender.com';
+
+        // Verificação de segurança para admin
+        const usuario = JSON.parse(localStorage.getItem('usuario_logado'));
+        if (!usuario || usuario.cargo !== 'admin') { window.location.href = 'login.html'; }
+
         async function carregarUsuarios() {
-            const res = await fetch('/api/usuarios');
+            const res = await fetch(`${API_URL}/api/usuarios`);
             const usuarios = await res.json();
             const select = document.getElementById('select-usuario');
             select.innerHTML = usuarios.filter(u => u.cargo !== 'admin').map(u => `<option value="${u.id}">${u.nome}</option>`).join('');
         }
 
-        // Evento para cadastrar funcionário com validação restrita a números na senha
         document.getElementById('formCadastrarFuncionario').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -121,7 +126,7 @@
             }
 
             try {
-                const resposta = await fetch('/api/admin/criar-funcionario', {
+                const resposta = await fetch(`${API_URL}/api/admin/criar-funcionario`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nome, senha })
@@ -149,7 +154,7 @@
 
             if (!usuario_id || !data) { alert('Selecione o funcionário e a data.'); return; }
 
-            await fetch('/api/admin/lancar-status', {
+            await fetch(`${API_URL}/api/admin/lancar-status`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ usuario_id, data, status })
@@ -159,7 +164,7 @@
         }
 
         async function carregarSolicitacoes() {
-            const res = await fetch('/api/solicitacoes');
+            const res = await fetch(`${API_URL}/api/solicitacoes`);
             const pendentes = await res.json();
             const container = document.getElementById('lista-solicitacoes');
 
@@ -187,7 +192,7 @@
         }
 
         async function responderPedido(id, acao, usuario_id, data, tipo, horario) {
-            await fetch('/api/solicitacoes/responder', {
+            await fetch(`${API_URL}/api/solicitacoes/responder`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id, acao, usuario_id, data, tipo, horario })
@@ -196,7 +201,7 @@
         }
 
         async function carregarRegistrosGlobais() {
-            const res = await fetch('/api/admin/todos-pontos');
+            const res = await fetch(`${API_URL}/api/admin/todos-pontos`);
             const registros = await res.json();
             const tbody = document.getElementById('tabela-admin-geral');
 
@@ -228,7 +233,7 @@
             carregarRegistrosGlobais();
         }
 
-        function sair() { sessionStorage.clear(); window.location.href = 'login.html'; }
+        function sair() { localStorage.clear(); window.location.href = 'login.html'; }
 
         carregarTudo();
         setInterval(carregarTudo, 5000);

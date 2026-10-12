@@ -28,6 +28,7 @@ app.get('/admin.html', (req, res) => {
 app.get('/index.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'www', 'index.html'));
 });
+
 // --- AUTENTICAÇÃO / LOGIN ---
 app.post('/api/login', async (req, res) => {
     const { nome, senha } = req.body;

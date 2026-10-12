@@ -1,0 +1,9 @@
+{
+  "appId": "com.espelho.ponto",
+  "appName": "Espelho Ponto",
+  "webDir": "www",
+  "server": {
+    "url": "https://espelho-p5wk.onrender.com",
+    "cleartext": true
+  }
+}

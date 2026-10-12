@@ -94,7 +94,7 @@
         </section>
     </main>
 
-    <!-- Modais (Edição e Foto) -->
+    <!-- Modais -->
     <div id="modal-edicao" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center z-50 p-4">
         <div class="bg-slate-900 border border-slate-800 p-5 rounded-3xl max-w-md w-full">
             <h3 class="font-bold text-slate-200 mb-3 text-sm">Solicitar Correção</h3>
@@ -124,7 +124,6 @@
     <script>
         const API_URL = 'https://espelho-p5wk.onrender.com';
 
-        // Leitura correta do localStorage para mobile
         const usuario = JSON.parse(localStorage.getItem('usuario_logado'));
         if (!usuario) { window.location.href = 'login.html'; }
         document.getElementById('nome-usuario-header').innerText = usuario.nome;
@@ -302,7 +301,6 @@
         function verFoto(url) { document.getElementById('img-modal').src = url; document.getElementById('modal-foto').classList.remove('hidden'); document.getElementById('modal-foto').classList.add('flex'); }
         function fecharModalFoto() { document.getElementById('modal-foto').classList.add('hidden'); document.getElementById('modal-foto').classList.remove('flex'); }
         
-        // Limpeza correta da sessão com localStorage
         function sair() { localStorage.clear(); window.location.href = 'login.html'; }
 
         carregarCalendario();
